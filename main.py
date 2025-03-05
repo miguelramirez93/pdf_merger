@@ -1,59 +1,26 @@
-import PyPDF2
-import os
-import re
+from typing import Any
 
-merger = PyPDF2.PdfMerger()
+from dir.searcher import Searcher
+from infrastructure.filemanager.folder_reader import OSFolderReader
+from infrastructure.filemanager.folder_writer import OSFolderWriter
+from infrastructure.pdfmerger.pypdf_merger import PyPDFMerger
+from merger.merger import Merger
 
-mergers_indx = {}
-
-
-def merge_pdf_files_recursive(path="."):
-    for entry in os.listdir(path):
-        full_path = os.path.join(path, entry)
-        if os.path.isdir(full_path):
-            merge_pdf_files_recursive(full_path)
-        else:
-            if full_path.endswith(".pdf"):
-                add_file_to_merge_indx(path, full_path)
-
-
-def merge_pdf_files_samename_recursive(path="."):
-    for entry in os.listdir(path):
-        full_path = os.path.join(path, entry)
-        if os.path.isdir(full_path):
-            merge_pdf_files_samename_recursive(full_path)
-        else:
-            if full_path.endswith(".pdf"):
-                index = get_file_index(full_path)
-                add_file_to_merge_indx(index, full_path)
-
-
-def add_file_to_merge_indx(index, full_path):
-    if mergers_indx.get(index) is None:
-        mergers_indx[index] = PyPDF2.PdfMerger()
-    try:
-        mergers_indx[index].append(full_path)
-    except Exception as e:
-        print(f"file path: {full_path} error:{str(e)}")
-
-
-def get_file_name_from_path(path="combined") -> str:
-    splitted = path.split("/")
-    return splitted[-1]
-
-
-def get_file_index(path="combined") -> str:
-    splitted = path.split("/")
-    rawFileName = splitted[-1]
-    return re.sub(r"\([0-9]+\).pdf", "", rawFileName).replace(".pdf", "")
-
-
-directory_path = "./target"
-outdir_path = "./out"
 try:
-    merge_pdf_files_recursive(directory_path)
-    # merge_pdf_files_samename_recursive(directory_path)
-    for dir in mergers_indx:
-        mergers_indx[dir].write(f"{outdir_path}/{get_file_name_from_path(dir)}.pdf")
+    # init dependencies
+    _folder_reader: Any = OSFolderReader()
+    _searcher: Any = Searcher(reader=_folder_reader)
+    _merger_cli: Any = PyPDFMerger()
+    _dir_writer: Any = OSFolderWriter()
+
+
+# Execution
+    _merger = Merger(client=_merger_cli, file_searcher=_searcher,
+                     dir_writer=_dir_writer)
+
+    print("Merging process started, please wait...")
+    _merger.merge_dir_tree_files("./in", "./out")
 except Exception as e:
-    print("Error merging files: " + str(e))
+    print(f"There was an error running the merger: {str(e)}")
+finally:
+    input("press any key to exit...")
