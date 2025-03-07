@@ -3,7 +3,6 @@ import re
 from typing import Dict, List
 
 from merger.contracts import Client, DirWriter, FileSearcher
-from shared.dir_writer import WriteException
 
 
 class Merger:
