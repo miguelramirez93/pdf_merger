@@ -55,35 +55,7 @@ jobs:
         Copy-Item -Path "LICENSE" -Destination "$releaseDir/"
         Copy-Item -Path "Pipfile" -Destination "$releaseDir/"
         
-        $readmeContent = @"
-# PDF Merger ${{ steps.version.outputs.version }} - Windows
-
-## Quick Start
-
-1. Extract this folder to your desired location
-2. Place PDF files in the 'in' folder (organize in subdirectories if needed)
-3. Double-click pdf_merger.exe to run
-4. Check the 'out' folder for merged results
-
-## System Requirements
-
-- Windows 7 or later
-- No additional software required (everything is included in the exe)
-
-## Usage
-
-Simply run pdf_merger.exe from the command line or by double-clicking:
-
-```
-pdf_merger.exe
-```
-
-## Documentation
-
-See README.md for complete documentation and usage instructions.
-"@
-        
-        Set-Content -Path "$releaseDir/README_WINDOWS.txt" -Value $readmeContent -Encoding UTF8
+        Write-Output "Release directory created at $releaseDir"
 
     - name: Create ZIP archive
       shell: pwsh
