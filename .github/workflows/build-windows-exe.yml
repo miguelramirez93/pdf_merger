@@ -68,45 +68,47 @@ jobs:
         Write-Output "Created: $zipFile"
         Get-ChildItem $zipFile
 
-    - name: Create GitHub Release
+    - name: Create GitHub Release with Files
       if: startsWith(github.ref, 'refs/tags/')
-      uses: softprops/action-gh-release@v2
-      with:
-        files: |
-          pdf_merger_${{ steps.version.outputs.version }}_windows.zip
-          pdf_merger_${{ steps.version.outputs.version }}_windows/pdf_merger.exe
-        draft: false
-        prerelease: false
-        body: |
-          # PDF Merger ${{ steps.version.outputs.version }}
+      shell: pwsh
+      run: |
+        $version = "${{ steps.version.outputs.version }}"
+        $zipFile = "pdf_merger_$version`_windows.zip"
+        $exeFile = "pdf_merger_$version`_windows/pdf_merger.exe"
+        
+        $releaseNotes = @"
+# PDF Merger $version
 
-          ## Download
+## Download
 
-          - **pdf_merger.exe** - Standalone executable (recommended for most users)
-          - **pdf_merger_${{ steps.version.outputs.version }}_windows.zip** - Complete package with documentation
+- **pdf_merger.exe** - Standalone executable (recommended for most users)
+- **pdf_merger_$version`_windows.zip** - Complete package with documentation
 
-          ## Installation
+## Installation
 
-          ### Option 1: Standalone EXE (Easiest)
-          1. Download `pdf_merger.exe`
-          2. Create `in` and `out` folders in the same directory
-          3. Run the exe
+### Option 1: Standalone EXE (Easiest)
+1. Download `pdf_merger.exe`
+2. Create `in` and `out` folders in the same directory
+3. Run the exe
 
-          ### Option 2: Full Package
-          1. Download and extract the ZIP file
-          2. Place PDF files in the `in` folder
-          3. Run `pdf_merger.exe`
+### Option 2: Full Package
+1. Download and extract the ZIP file
+2. Place PDF files in the `in` folder
+3. Run `pdf_merger.exe`
 
-          ## What's New
+## What's New
 
-          See CHANGELOG.md for detailed changes in this release.
+See CHANGELOG.md for detailed changes in this release.
 
-          ## System Requirements
+## System Requirements
 
-          - Windows 7 or later
-          - No additional software required
+- Windows 7 or later
+- No additional software required
+"@
+        
+        gh release create "$version" "$zipFile" "$exeFile" --title "PDF Merger $version" --notes $releaseNotes --latest
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Upload artifacts
       if: always()
