@@ -89,7 +89,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: pdf_merger-${{ steps.version.outputs.version }}-windows
-        path: |
-          pdf_merger_${{ steps.version.outputs.version }}_windows/
-          dist/pdf_merger.exe
+        path: pdf_merger_${{ steps.version.outputs.version }}_windows/
         retention-days: 30
