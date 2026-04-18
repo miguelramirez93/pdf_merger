@@ -31,32 +31,31 @@ jobs:
 
     - name: Extract version from tag
       id: version
-      shell: powershell
+      shell: pwsh
       run: |
         $tag = "${{ github.ref }}" -replace 'refs/tags/', ''
         echo "version=$tag" >> $env:GITHUB_OUTPUT
         echo "Version: $tag"
 
     - name: Build executable with PyInstaller
-      shell: powershell
+      shell: pwsh
       run: |
         pyinstaller pdf_merger.spec
 
     - name: Create release directory
-      shell: powershell
+      shell: pwsh
       run: |
         $releaseDir = "pdf_merger_${{ steps.version.outputs.version }}_windows"
-        mkdir "$releaseDir"
-        mkdir "$releaseDir\in"
-        mkdir "$releaseDir\out"
-        Copy-Item -Path "dist\pdf_merger.exe" -Destination "$releaseDir\"
-        Copy-Item -Path "README.md" -Destination "$releaseDir\"
-        Copy-Item -Path "CHANGELOG.md" -Destination "$releaseDir\"
-        Copy-Item -Path "LICENSE" -Destination "$releaseDir\"
-        Copy-Item -Path "Pipfile" -Destination "$releaseDir\"
+        New-Item -ItemType Directory -Path $releaseDir -Force | Out-Null
+        New-Item -ItemType Directory -Path "$releaseDir/in" -Force | Out-Null
+        New-Item -ItemType Directory -Path "$releaseDir/out" -Force | Out-Null
+        Copy-Item -Path "dist/pdf_merger.exe" -Destination "$releaseDir/"
+        Copy-Item -Path "README.md" -Destination "$releaseDir/"
+        Copy-Item -Path "CHANGELOG.md" -Destination "$releaseDir/"
+        Copy-Item -Path "LICENSE" -Destination "$releaseDir/"
+        Copy-Item -Path "Pipfile" -Destination "$releaseDir/"
         
-        # Create run instructions
-        @"
+        $readmeContent = @"
 # PDF Merger ${{ steps.version.outputs.version }} - Windows
 
 ## Quick Start
@@ -82,15 +81,18 @@ pdf_merger.exe
 ## Documentation
 
 See README.md for complete documentation and usage instructions.
-"@ | Out-File -FilePath "$releaseDir\README_WINDOWS.txt" -Encoding UTF8
+"@
+        
+        Set-Content -Path "$releaseDir/README_WINDOWS.txt" -Value $readmeContent -Encoding UTF8
 
     - name: Create ZIP archive
-      shell: powershell
+      shell: pwsh
       run: |
         $releaseDir = "pdf_merger_${{ steps.version.outputs.version }}_windows"
         $zipFile = "$releaseDir.zip"
-        Compress-Archive -Path $releaseDir -DestinationPath $zipFile
+        Compress-Archive -Path $releaseDir -DestinationPath $zipFile -Force
         Write-Output "Created: $zipFile"
+        Get-ChildItem $zipFile
 
     - name: Create GitHub Release
       if: startsWith(github.ref, 'refs/tags/')
