@@ -73,38 +73,38 @@ jobs:
       shell: pwsh
       run: |
         $version = "${{ steps.version.outputs.version }}"
-        $zipFile = "pdf_merger_$version`_windows.zip"
-        $exeFile = "pdf_merger_$version`_windows/pdf_merger.exe"
+        $zipFile = "pdf_merger_${version}_windows.zip"
+        $exeFile = "pdf_merger_${version}_windows/pdf_merger.exe"
         
-        $releaseNotes = @"
-# PDF Merger $version
+        $releaseNotes = @'
+        # PDF Merger {0}
 
-## Download
+        ## Download
 
-- **pdf_merger.exe** - Standalone executable (recommended for most users)
-- **pdf_merger_$version`_windows.zip** - Complete package with documentation
+        - **pdf_merger.exe** - Standalone executable (recommended for most users)
+        - **pdf_merger_{0}_windows.zip** - Complete package with documentation
 
-## Installation
+        ## Installation
 
-### Option 1: Standalone EXE (Easiest)
-1. Download `pdf_merger.exe`
-2. Create `in` and `out` folders in the same directory
-3. Run the exe
+        ### Option 1: Standalone EXE (Easiest)
+        1. Download `pdf_merger.exe`
+        2. Create `in` and `out` folders in the same directory
+        3. Run the exe
 
-### Option 2: Full Package
-1. Download and extract the ZIP file
-2. Place PDF files in the `in` folder
-3. Run `pdf_merger.exe`
+        ### Option 2: Full Package
+        1. Download and extract the ZIP file
+        2. Place PDF files in the `in` folder
+        3. Run `pdf_merger.exe`
 
-## What's New
+        ## What's New
 
-See CHANGELOG.md for detailed changes in this release.
+        See CHANGELOG.md for detailed changes in this release.
 
-## System Requirements
+        ## System Requirements
 
-- Windows 7 or later
-- No additional software required
-"@
+        - Windows 7 or later
+        - No additional software required
+        '@ -f $version
         
         gh release create "$version" "$zipFile" "$exeFile" --title "PDF Merger $version" --notes $releaseNotes --latest
       env:
