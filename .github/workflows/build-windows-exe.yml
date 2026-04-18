@@ -31,30 +31,19 @@ jobs:
 
     - name: Extract version from tag
       id: version
+      shell: powershell
       run: |
         $tag = "${{ github.ref }}" -replace 'refs/tags/', ''
-        echo "version=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+        echo "version=$tag" >> $env:GITHUB_OUTPUT
         echo "Version: $tag"
 
     - name: Build executable with PyInstaller
+      shell: powershell
       run: |
-        pyinstaller --name=pdf_merger `
-          --onefile `
-          --windowed `
-          --icon=NONE `
-          --add-data="merger:merger" `
-          --add-data="dir:dir" `
-          --add-data="infrastructure:infrastructure" `
-          --add-data="shared:shared" `
-          --add-data="README.md:." `
-          --add-data="CHANGELOG.md:." `
-          --add-data="LICENSE:." `
-          --distpath=./dist `
-          --buildpath=./build `
-          --specpath=./build `
-          main.py
+        pyinstaller pdf_merger.spec
 
     - name: Create release directory
+      shell: powershell
       run: |
         $releaseDir = "pdf_merger_${{ steps.version.outputs.version }}_windows"
         mkdir "$releaseDir"
@@ -96,6 +85,7 @@ See README.md for complete documentation and usage instructions.
 "@ | Out-File -FilePath "$releaseDir\README_WINDOWS.txt" -Encoding UTF8
 
     - name: Create ZIP archive
+      shell: powershell
       run: |
         $releaseDir = "pdf_merger_${{ steps.version.outputs.version }}_windows"
         $zipFile = "$releaseDir.zip"
