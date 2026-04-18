@@ -96,13 +96,81 @@ class TestMerger(TestCase):
         self.assertEqual(expected_client_reset_calls,
                          reset_call_recoder.get_times_called())
 
-    # stubs defs
+    def test_should_merge_files_with_multi_digit_numbers(self):
+
+        expected_dir_write_call = [
+            ["./out/"],
+            ["./out/docs"]
+        ]
+
+        expected_client_write_calls = [
+            ["./out/report.pdf"],
+            ["./out/docs/guide.pdf"],
+        ]
+
+        expected_client_append_calls = [
+            ["./report-1.pdf"],
+            ["./report-2.pdf"],
+            ["./report-10.pdf"],
+            ["./docs/guide-5.pdf"],
+            ["./docs/guide-12.pdf"],
+            ["./docs/guide-123.pdf"],
+        ]
+
+        expected_client_reset_calls = 2
+
+        self._stub_file_search_multi_digit_res()
+
+        write_call_recoder = CallRecoder()
+
+        self._dir_writer.write.side_effect = write_call_recoder.record
+
+        reset_call_recoder = CallRecoder()
+
+        self._client.reset.side_effect = reset_call_recoder.record
+
+        client_write_call_recoder = CallRecoder()
+
+        self._client.write.side_effect = client_write_call_recoder.record
+
+        client_append_call_recoder = CallRecoder()
+
+        self._client.append.side_effect = client_append_call_recoder.record
+
+        merger = Merger(self._client, self._file_searcher, self._dir_writer)
+
+        merger.merge_dir_tree_files(".", "./out")
+
+        self._file_searcher.search_files.assert_called_with(".", "pdf")
+
+        self.assertEqual(expected_dir_write_call,
+                         write_call_recoder.get_record())
+
+        self.assertEqual(expected_client_append_calls,
+                         client_append_call_recoder.get_record())
+
+        self.assertEqual(expected_client_write_calls,
+                         client_write_call_recoder.get_record())
+
+        self.assertEqual(expected_client_reset_calls,
+                         reset_call_recoder.get_times_called())
+
+     # stubs defs
 
     def _stub_file_search_mergeable_res(self):
         def search_files_success_result(path: str, ext: str) -> Dict[str, List[str]]:
             return {
                 ".": ["./a.pdf", "./a-1.pdf", "./d.pdf"],
                 "./first": ["./first/b.pdf", "./first/c.pdf", "./first/b-1.pdf", "./first/c-1.pdf", "./first/e.pdf"],
+            }
+
+        self._file_searcher.search_files.side_effect = search_files_success_result
+
+    def _stub_file_search_multi_digit_res(self):
+        def search_files_success_result(path: str, ext: str) -> Dict[str, List[str]]:
+            return {
+                ".": ["./report-1.pdf", "./report-2.pdf", "./report-10.pdf"],
+                "./docs": ["./docs/guide-5.pdf", "./docs/guide-12.pdf", "./docs/guide-123.pdf"],
             }
 
         self._file_searcher.search_files.side_effect = search_files_success_result

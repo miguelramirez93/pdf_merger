@@ -48,4 +48,4 @@ class Merger:
     def _get_file_index(self, path: str) -> str:
         splitted = os.path.split(path)
         rawFileName = splitted[-1]
-        return re.sub(r"-([0-9]).pdf", "", rawFileName).replace(".pdf", "")
+        return re.sub(r"-([0-9]+)\.pdf", "", rawFileName).replace(".pdf", "")
