@@ -11,10 +11,19 @@ A Python CLI tool that recursively searches for PDF files in a directory structu
 
 ## Requirements
 
-- Python 3.10 or higher
-- PyPDF2 (for PDF manipulation)
+- **Windows Executable**: Windows 7 or later (no additional requirements)
+- **From Source**: Python 3.10 or higher, PyPDF2
 
 ## Installation
+
+### Option 1: Windows Executable (Easiest)
+
+Download the latest Windows executable from the [Releases](https://github.com/miguelramirez93/pdf_merger/releases) page:
+- Extract the zip file
+- No dependencies to install - everything is included
+- Run `pdf_merger.exe`
+
+### Option 2: From Source
 
 1. Clone the repository:
 ```bash

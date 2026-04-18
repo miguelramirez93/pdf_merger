@@ -1,0 +1,153 @@
+name: Build Windows Executable
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    strategy:
+      matrix:
+        python-version: ['3.10']
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller pypdf2
+
+    - name: Extract version from tag
+      id: version
+      run: |
+        $tag = "${{ github.ref }}" -replace 'refs/tags/', ''
+        echo "version=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+        echo "Version: $tag"
+
+    - name: Build executable with PyInstaller
+      run: |
+        pyinstaller --name=pdf_merger `
+          --onefile `
+          --windowed `
+          --icon=NONE `
+          --add-data="merger:merger" `
+          --add-data="dir:dir" `
+          --add-data="infrastructure:infrastructure" `
+          --add-data="shared:shared" `
+          --add-data="README.md:." `
+          --add-data="CHANGELOG.md:." `
+          --add-data="LICENSE:." `
+          --distpath=./dist `
+          --buildpath=./build `
+          --specpath=./build `
+          main.py
+
+    - name: Create release directory
+      run: |
+        $releaseDir = "pdf_merger_${{ steps.version.outputs.version }}_windows"
+        mkdir "$releaseDir"
+        mkdir "$releaseDir\in"
+        mkdir "$releaseDir\out"
+        Copy-Item -Path "dist\pdf_merger.exe" -Destination "$releaseDir\"
+        Copy-Item -Path "README.md" -Destination "$releaseDir\"
+        Copy-Item -Path "CHANGELOG.md" -Destination "$releaseDir\"
+        Copy-Item -Path "LICENSE" -Destination "$releaseDir\"
+        Copy-Item -Path "Pipfile" -Destination "$releaseDir\"
+        
+        # Create run instructions
+        @"
+# PDF Merger ${{ steps.version.outputs.version }} - Windows
+
+## Quick Start
+
+1. Extract this folder to your desired location
+2. Place PDF files in the 'in' folder (organize in subdirectories if needed)
+3. Double-click pdf_merger.exe to run
+4. Check the 'out' folder for merged results
+
+## System Requirements
+
+- Windows 7 or later
+- No additional software required (everything is included in the exe)
+
+## Usage
+
+Simply run pdf_merger.exe from the command line or by double-clicking:
+
+```
+pdf_merger.exe
+```
+
+## Documentation
+
+See README.md for complete documentation and usage instructions.
+"@ | Out-File -FilePath "$releaseDir\README_WINDOWS.txt" -Encoding UTF8
+
+    - name: Create ZIP archive
+      run: |
+        $releaseDir = "pdf_merger_${{ steps.version.outputs.version }}_windows"
+        $zipFile = "$releaseDir.zip"
+        Compress-Archive -Path $releaseDir -DestinationPath $zipFile
+        Write-Output "Created: $zipFile"
+
+    - name: Create GitHub Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          pdf_merger_${{ steps.version.outputs.version }}_windows.zip
+          pdf_merger_${{ steps.version.outputs.version }}_windows/pdf_merger.exe
+        draft: false
+        prerelease: false
+        body: |
+          # PDF Merger ${{ steps.version.outputs.version }}
+
+          ## Download
+
+          - **pdf_merger.exe** - Standalone executable (recommended for most users)
+          - **pdf_merger_${{ steps.version.outputs.version }}_windows.zip** - Complete package with documentation
+
+          ## Installation
+
+          ### Option 1: Standalone EXE (Easiest)
+          1. Download `pdf_merger.exe`
+          2. Create `in` and `out` folders in the same directory
+          3. Run the exe
+
+          ### Option 2: Full Package
+          1. Download and extract the ZIP file
+          2. Place PDF files in the `in` folder
+          3. Run `pdf_merger.exe`
+
+          ## What's New
+
+          See CHANGELOG.md for detailed changes in this release.
+
+          ## System Requirements
+
+          - Windows 7 or later
+          - No additional software required
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload artifacts
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: pdf_merger-${{ steps.version.outputs.version }}-windows
+        path: |
+          pdf_merger_${{ steps.version.outputs.version }}_windows/
+          dist/pdf_merger.exe
+        retention-days: 30
